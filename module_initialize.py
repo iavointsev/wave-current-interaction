@@ -5,6 +5,8 @@ sym_zero_vec = (sym.S.Zero, sym.S.Zero, sym.S.Zero)
 sym_zu = sym.Symbol(r'\zeta', real = True, positive = True, zero = False, nonzero = True)
 
 sym_alpha = sym.Symbol(r'\alpha', real = True, positive = True, zero = False, nonzero = True)
+sym_gamma1 = sym.Symbol(r'\gamma_1', real = True, positive = True, zero = False, nonzero = True)
+sym_gamma2 = sym.Symbol(r'\gamma_2', real = True, positive = True, zero = False, nonzero = True)
 
 sym_x = sym.Symbol('x', real = True)
 sym_y = sym.Symbol('y', real = True)
@@ -31,8 +33,8 @@ class module_POF:
         # 4) Interaction parameters
         self.sym_lambda = sym.Symbol(r'\lambda', zero = False, nonzero = True)
         self.sym_lambda_dim = sym.Symbol(r'\tilde{\lambda}', zero = False, nonzero = True)
-        self.sym_mu = sym.Symbol(r'\mu', zero = False, nonzero = True)
-        self.sym_mu0 = sym.Symbol(r'\mu_0', zero = False, nonzero = True)
+        self.sym_dlambda_dim = sym.Symbol(r'\Delta\tilde{\lambda}', zero = False, nonzero = True)
+        self.sym_lambda_dim0 = sym.Symbol(r'\tilde{\lambda}_0', zero = False, nonzero = True)
 
         # 2) Oblique wave (initially set to zero)
         self.sym_dphi_symbol = sym.Symbol(r'\delta{\phi}')
@@ -66,12 +68,12 @@ class module_POF:
         self.sym_dOx, self.sym_dOy, self.sym_dOz = self.sym_vec_dO
 
         self.sym_dPsi = sym.Function(r'\delta\Psi')(sym_z)
-        self.sym_dPsi_mu = sym.Function(r'\delta\Psi')(self.sym_mu)
-        self.sym_partial_dPsi_mu = sym.Function(r'\delta\Psi^{\prime}')(self.sym_mu)
         self.sym_dPsi_symbol = self.sym_dPsi
         self.sym_d2z_dPsi = self.sym_dPsi_symbol.diff((sym_z, 2))
         self.sym_dPsi_dim = sym.Function(r'\tilde{\delta\Psi}')(sym_z)
-        self.sym__d2z_dPsi_dim_symbol = (self.sym_dPsi_dim).diff(sym_z, 2)
+        self.sym_d2z_dPsi_dim_symbol = (self.sym_dPsi_dim).diff(sym_z, 2)
+        self.sym_dPsi_dim_lambda = sym.Function(r'\delta\Psi')(self.sym_lambda_dim)
+        self.sym_partial_dPsi_dim_lambda = sym.Function(r'\delta\Psi^{\prime}')(self.sym_lambda_dim)
 
         # 6) Perturbated vortex force
         self.sym_dfVx_symbol = sym.Symbol(r'\delta f^{\scriptsize{V}}_x')
@@ -84,13 +86,13 @@ class module_POF:
         # 7) Vortical pressure part
         self.sym_dp_symbol = sym.Symbol(r'\delta{p}^{\varpi}')
         self.sym_dp_int_symbol = sym.Symbol(r'\delta{p}^{\varpi}_{int}')
-        self.sym_dp_int_symbol_mu = sym.Function(r'\delta{p}^{\varpi}_{int}')(self.sym_mu)
+        self.sym_dp_int_symbol_lambda = sym.Function(r'\delta{p}^{\varpi}_{int}')(self.sym_lambda_dim)
         self.sym_dp_int_dim_symbol = sym.Symbol(r'\overline{\delta{p}}^{\varpi}_{int}')
-        self.sym_dp_int = sym.Integral((-1) * sym.exp((self.sym_dkz + 1) * sym_z) * self.sym_psi0 * \
+        self.sym_dp_int = sym.Integral((-1) * sym.exp((self.sym_dkz + 1) * sym_z) * \
                                     ((sym.I * self.sym_dVx_symbol.diff((sym_z, 2)) - sym.I * self.sym_theta**2 * self.sym_dVx_symbol) + \
                                     (self.sym_dVz_symbol.diff((sym_z, 2)) - self.sym_theta**2 * self.sym_dVz_symbol)), \
                                     (sym_z, -sym.oo, 0)).simplify()
-        self.sym_dp = (sym_alpha * self.sym_dp_int_symbol + sym.I * self.sym_O0 * self.sym_dpsi + \
+        self.sym_dp = (sym_alpha * self.sym_psi0 * self.sym_dp_int_symbol + sym_gamma2 * sym.I * self.sym_O0 * self.sym_dpsi + \
                             sym_alpha * sym.I * self.sym_psi0 * self.sym_dVx_symbol.diff(sym_z)) / self.sym_dkz
 
         # 8) Boundary conditions
@@ -103,23 +105,33 @@ class module_POF:
         # Dimensionless parameters
         self.substitutions_dimensionless = self.__initialize_substitutions_dimensionless()
 
+        # Comparing with previous results
+        self.sym_mu = sym.Symbol(r'\mu', zero = False, nonzero = True)
+        self.sym_mu0 = sym.Symbol(r'\mu_0', zero = False, nonzero = True)
+        self.substitutions_mu = ((self.sym_lambda_dim, sym.sqrt(self.sym_epsilon * (1 - self.sym_epsilon / 4)) * self.sym_h0 * self.sym_theta / self.sym_mu),
+                                 (self.sym_dPsi_dim, self.sym_dPsi_dim * (self.sym_mu * sym.sqrt(self.sym_epsilon)))
+                                )
+
     def __initialize_substitutions_dimensionless(self):
         if self.__if_main_wave and self.__if_shear_flow:
-            substitutions_dimensionless = ((self.sym_psi0, -sym.I * self.sym_h0 * self.sym_g / (self.sym_omega + self.sym_O0)),
-                                        (self.sym_omega, self.sym_omega0 - self.sym_O0 / 2),
+            substitutions_dimensionless = ((self.sym_psi0, -sym.I * self.sym_omega * self.sym_h0),
+                                        # (self.sym_omega, self.sym_omega0),
+                                        # (self.sym_omega, self.sym_omega0 - self.sym_O0 / 2),
+                                        (self.sym_omega, self.sym_omega0 - sym_gamma1 * self.sym_O0 / 2),
                                         (self.sym_lambda, self.sym_lambda_dim * self.sym_omega0), 
                                         (self.sym_O0, self.sym_omega0 * self.sym_epsilon / 2), 
+                                        (self.sym_dPsi, self.sym_dPsi_dim * self.sym_dpsi * sym.sqrt(self.sym_epsilon)), 
+                                        # (self.sym_dPsi, self.sym_dPsi_dim * self.sym_dpsi), 
                                         (self.sym_dxi, self.sym_dh_dim * self.sym_h0), 
-                                        (self.sym_dpsi, self.sym_dpsi_dim * self.sym_h0), 
-                                        (self.sym_dPsi, self.sym_dPsi_dim * self.sym_dpsi_dim), 
-                                        (self.sym_g, 1),
-                                        (self.sym_omega0, 1),) 
+                                        (self.sym_dpsi, self.sym_dpsi_dim * self.sym_psi0), 
+                                        (self.sym_g, self.sym_omega0**2))
+                                        # (self.sym_omega0, 1),) 
         else: substitutions_dimensionless = ()
         return substitutions_dimensionless
     
     def __initialize_main_wave(self):
         if self.__if_main_wave: 
-            sym_psi0 = sym.Symbol(r'\psi^{\scriptsize{(0)}}', zero = False, nonzero = True)
+            sym_psi0 = sym.Symbol(r'\psi^{\scriptsize{(0)}}', real = False)
             sym_h0 = sym.Symbol(r'h^{\scriptsize{(0)}}', real = True, positive = True, nonzero = True, zero = False)
             sym_phi0 = sym_psi0 * sym.exp(sym.I * sym_x + sym_z - sym.I * self.sym_omega * sym_t)
         else: sym_psi0 = sym_h0 = sym_phi0 = sym.S.Zero
@@ -128,7 +140,7 @@ class module_POF:
     
     def __initialize_oblique_wave(self):
         if self.__if_oblique_wave: 
-            sym_dpsi = sym.Symbol(r'\delta\psi', zero = False, nonzero = True)
+            sym_dpsi = sym.Symbol(r'\delta\psi', real = False)
             sym_dxi = sym.Symbol(r'\delta\xi', zero = False, nonzero = True)
             sym_dphi = sym_dpsi * sym.exp(sym.I * self.sym_dkx * sym_x + sym.I * self.sym_dky * sym_y \
                                 + self.sym_dkz * sym_z - sym.I * self.sym_omega * sym_t) \
@@ -209,6 +221,3 @@ class module_POF:
             return sym.Eq(eq.lhs.func(*newargs), 0)
         except:
             return eq
-
-        
-
