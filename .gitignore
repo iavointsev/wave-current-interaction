@@ -5,4 +5,4 @@ __*
 *.data
 *.svg
 latex/
-*.pkl
+.pkl
