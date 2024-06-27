@@ -380,8 +380,8 @@ class NumericalProblem:
                                             sym_z, 
                                             sym_dPsi_dim], 
                                             sym_dp_int_dim_expr, modules = 'numpy')
-        
-        num_dp_int_dim = lambda num_mu, theta, alpha, z, dPsi: simpson(num_dp_int_dim_expr(num_mu, theta, alpha, z, dPsi), -z)
+
+        num_dp_int_dim = lambda num_mu, theta, alpha, z, dPsi: simpson(num_dp_int_dim_expr(num_mu, theta, alpha, z, dPsi), x = -z)
 
         # Lambdify base mu equation
         sym_eq_mu = substitute(sym_eq_mu, self.substitutions_numerical).simplify()
