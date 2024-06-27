@@ -1,4 +1,5 @@
 from module_utils import *
+import signal
 from module_preparations import create_experiment, load_dump, NumericalProblem
 from module_numerical_experiment_zero_singular import getting_statistics, MetaData
 from collections.abc import Iterable
@@ -7,6 +8,11 @@ import importlib
 from pathlib import Path
 
 StrPath = str
+
+def handle_sigterm(signum, frame) -> None:
+    signame = signal.Signals(signum).name
+    print(f"Signal handler called with signal {signame} ({signum})")
+    raise KeyboardInterrupt
 
 def _verify_files(filename: StrPath, suffix: str):
     if not filename.endswith(suffix):
@@ -84,16 +90,16 @@ def perform_numerical_experiment(alpha_range: Iterable| float,
     storage = []
     storage_filename = "storage.data"
     count = 0
-    # try:
-    for metadata in gen:
-        storage.append(metadata)
-        if (count % 16) == 0:
+    try:
+        for metadata in gen:
+            storage.append(metadata)
+            if (count % 16) == 0:
+                save_storage(storage, storage_filename)
+                storage = []
+    except KeyboardInterrupt:
+        if storage:
             save_storage(storage, storage_filename)
-            storage = []
-    # except:
-    #     if storage:
-    #         save_storage(storage, storage_filename)
-    #     raise 
+        raise 
 
 
 def main():
