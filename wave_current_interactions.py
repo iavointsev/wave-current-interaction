@@ -52,6 +52,7 @@ def initialize_numerical_experiment(cli_args) -> tuple[Iterable | float, Iterabl
     _verify_files(config_filename, suffix = ".py")
     config = config_filename[:-3]
     try:
+        config = Path(config).as_posix()
         conf = importlib.import_module(config)
     except:
         raise ModuleNotFoundError("Configuration file is corrupted")

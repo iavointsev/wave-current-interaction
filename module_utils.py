@@ -1,7 +1,10 @@
-from IPython.display import display, Markdown
+def print(*args, **kwargs):
+    __builtins__.print(*args, **kwargs, flush = True)
+
 
 display = print
-Markdown = Markdown
+Markdown = lambda *args, **kwargs: ...
+
 
 def verbose_print(verbose: bool, *objs):
     return print(*objs) if verbose else None
