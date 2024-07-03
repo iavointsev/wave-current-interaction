@@ -4,5 +4,5 @@ __*
 *.pdf
 *.data
 *.svg
-latex/
-.pkl
+*.pkl
+*.sbatch
