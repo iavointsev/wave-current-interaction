@@ -344,8 +344,12 @@ class NumericalProblem:
             )
         self.__N_POINTS: int = N_POINTS
         self.__sym_equations = sym_equations
+        self.__numerical_parameters = numerical_parameters
         self.equation_dPsi, self.num_eq_mu, self.num_dp_int_dim = self._lambdify_sym_equations(sym_equations)
-        self.solution: NumericalSolution = None
+
+    @property
+    def numerical_parameters(self):
+        return self.__numerical_parameters
 
     def show_equations(self) -> None:
         sym_d2z_dPsi_dim_expr, sym_eq_mu, sym_dp_int_dim = self.__sym_equations

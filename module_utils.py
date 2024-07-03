@@ -1,6 +1,4 @@
-def print(*args, **kwargs):
-    __builtins__.print(*args, **kwargs, flush = True)
-
+# print = lambda *args, **kwargs: __builtins__.print(*args, **kwargs, flush = True)
 
 display = print
 Markdown = lambda *args, **kwargs: ...

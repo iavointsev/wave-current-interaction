@@ -12,12 +12,14 @@ from contextlib import nullcontext
 
 
 class MetaData(NamedTuple):
-    theta: float
     alpha: float
+    theta: float
     num_mu_zero: float
     num_mu_singular: float
     partial_dPsi0_zero: float
     partial_dPsi0_singular: float
+    def __str__(self):
+        return "{:.14f}\t{:.14f}\t{:.14f}\t{:.14f}\t{:.14f}\t{:.14f}".format(*self)
 
 
 def calculate_equation_mu_partial_dPsi0_values(numerical_problem: NumericalProblem, 
@@ -26,16 +28,25 @@ def calculate_equation_mu_partial_dPsi0_values(numerical_problem: NumericalProbl
                                                 num_mu_range: Iterable, 
                                                 partial_dPsi0_initial: float) -> Iterator[float, float]:
     
+    equation_mu_value = None
+
     for count, num_mu in enumerate(num_mu_range):
         count += 1
         try:
             z, dPsi, partial_dPsi0 = numerical_problem.solve_dPsi_eq(num_mu, theta, alpha, partial_dPsi0_initial)
         except RuntimeError:
-            print(f"RuntimeError occured when alpha = {alpha:.3e}, theta = {theta:.3e}, num_mu = {num_mu:.5e}. Skiping...") 
-        dp_int = numerical_problem.num_dp_int_dim(num_mu, theta, alpha, z, dPsi)
-        equation_mu_value = numerical_problem.num_eq_mu(num_mu, theta, alpha, partial_dPsi0, dp_int)
-        partial_dPsi0_initial = partial_dPsi0
-        yield equation_mu_value, partial_dPsi0
+            if equation_mu_value is not None:
+                msg = f"RuntimeError occured when alpha = {alpha:.3e}, theta = {theta:.3e}, num_mu = {num_mu:.5e}. Skiping..."
+                print(msg) 
+                yield equation_mu_value, partial_dPsi0
+            else:
+                msg = f"RuntimeError occured when alpha = {alpha:.3e}, theta = {theta:.3e}, num_mu = {num_mu:.5e}. No previous results, exiting..."
+                raise RuntimeError(msg)
+        else:
+            dp_int = numerical_problem.num_dp_int_dim(num_mu, theta, alpha, z, dPsi)
+            equation_mu_value = numerical_problem.num_eq_mu(num_mu, theta, alpha, partial_dPsi0, dp_int)
+            partial_dPsi0_initial = partial_dPsi0
+            yield equation_mu_value, partial_dPsi0
 
 
 def calculate_equation_mu_zero_singular(numerical_problem: NumericalProblem,
@@ -99,7 +110,6 @@ def getting_statistics(numerical_problem: NumericalProblem,
         update = lambda *args, **kwargs: ...
         logger = print
 
-    count = 0
     with p_bar:
         for alpha in alpha_range:
             partial_dPsi0_initial = numerical_problem.estimate_partial_dPsi0(num_mu_range[0], theta_range[0], alpha)
@@ -108,10 +118,7 @@ def getting_statistics(numerical_problem: NumericalProblem,
                 num_mu_left, num_mu_right = metadata.num_mu_zero, metadata.num_mu_singular
                 num_mu_range = np.linspace(num_mu_left - _DELTA, num_mu_right + _DELTA, N_num_mu_points)
                 partial_dPsi0_initial = metadata.partial_dPsi0_zero
-                if count % 16:
-                    logger(str(metadata))
                 yield metadata
-                count += 1
                 _ = update()
                 
 
