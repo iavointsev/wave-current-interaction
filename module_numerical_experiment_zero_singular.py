@@ -68,8 +68,7 @@ def calculate_equation_mu_zero_singular(numerical_problem: NumericalProblem,
             break
 
     if len(num_mu_zero_singular) != 2:
-        num_mu_zero_singular = [None, None]
-        partial_dPsi0_zero_singular = [None, None]
+        raise RuntimeError(f"Points not found. Exiting,,,")
     metadata = MetaData(alpha, theta, *num_mu_zero_singular, *partial_dPsi0_zero_singular)
     return metadata    
 

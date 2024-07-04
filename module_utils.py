@@ -1,4 +1,6 @@
-# print = lambda *args, **kwargs: __builtins__.print(*args, **kwargs, flush = True)
+import builtins
+
+print = lambda *args, **kwargs: builtins.print(*args, **kwargs, flush = True)
 
 display = print
 Markdown = lambda *args, **kwargs: ...

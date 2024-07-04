@@ -75,7 +75,8 @@ def getting_statistics(numerical_problem: NumericalProblem,
             partial_dPsi0_initial = numerical_problem.estimate_partial_dPsi0(num_mu_initial, theta_range[0], alpha)
             for theta in theta_range:
                 metadata = calculate_metadata(numerical_problem, theta, alpha, num_mu_initial, partial_dPsi0_initial)
-                _, _, num_mu_initial, partial_dPsi0_initial = metadata
+                num_mu_initial = metadata.num_mu
+                partial_dPsi0_initial = metadata.partial_dPsi0
                 yield metadata
                 _ = update()
 

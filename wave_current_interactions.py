@@ -124,7 +124,7 @@ def perform_zero_singular_experiment(numerical_problem: NumericalProblem,
     try:
         for metadata in gen:
             storage.append(metadata)
-            if (count % 2) == 0:
+            if (count % 16) == 0:
                 _save_storage(storage, storage_filename)
                 storage = []
             count += 1
@@ -137,18 +137,18 @@ def perform_zero_singular_experiment(numerical_problem: NumericalProblem,
 def perform_newton_experiment(numerical_problem: NumericalProblem,
                               alpha_range: Iterable| float, 
                               theta_range: Iterable| float, 
-                              num_mu_range: Iterable, 
+                              num_mu_initial: float, 
                               show_progress: bool) -> None:
     numerical_parameters = numerical_problem.numerical_parameters
     experiment_name = "newton"
     storage_filename = _create_filename(numerical_parameters, alpha_range, theta_range, experiment_name)
-    gen =  newt.getting_statistics(numerical_problem, theta_range, alpha_range, num_mu_range, show_progress)
+    gen =  newt.getting_statistics(numerical_problem, theta_range, alpha_range, num_mu_initial, show_progress)
     storage = []
     count = 1
     try:
         for metadata in gen:
             storage.append(metadata)
-            if (count % 2) == 0:
+            if (count % 16) == 0:
                 _save_storage(storage, storage_filename)
                 storage = []
             count += 1
