@@ -6,3 +6,4 @@ __*
 *.svg
 *.pkl
 *.sbatch
+*_conf.py
