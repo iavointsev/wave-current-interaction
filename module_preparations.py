@@ -8,6 +8,7 @@ from typing import NamedTuple
 from collections.abc import Callable
 import numpy.typing as npt
 import dill
+from pathlib import Path
 
 
 RealNumpyArray = npt.NDArray[np.float64]
@@ -534,4 +535,6 @@ def create_experiment(h0: float, epsilon: float) -> None:
     numerical_parameters = NumericalParameters(h0 = h0, epsilon = epsilon)
     dump_filename = f"numerical_problem_ho_{h0:.2e}_epsilon_{epsilon:.2e}.pkl"
     save_dump(sym_equations, numerical_parameters, dump_filename)
+    dump_file_path = Path(dump_filename).absolute().as_posix()
+    print(f"Experiment was successfully created: {dump_file_path}")
     

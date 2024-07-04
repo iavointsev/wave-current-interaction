@@ -128,7 +128,7 @@ def perform_zero_singular_experiment(numerical_problem: NumericalProblem,
                 _save_storage(storage, storage_filename)
                 storage = []
             count += 1
-    except KeyboardInterrupt:
+    except (KeyboardInterrupt, RuntimeError):
         if storage:
             _save_storage(storage, storage_filename)
         raise 

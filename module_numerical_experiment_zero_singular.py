@@ -36,11 +36,11 @@ def calculate_equation_mu_partial_dPsi0_values(numerical_problem: NumericalProbl
             z, dPsi, partial_dPsi0 = numerical_problem.solve_dPsi_eq(num_mu, theta, alpha, partial_dPsi0_initial)
         except RuntimeError:
             if equation_mu_value is not None:
-                msg = f"RuntimeError occured when alpha = {alpha:.3e}, theta = {theta:.3e}, num_mu = {num_mu:.5e}. Skiping..."
+                msg = f"RuntimeError occured during equation calculations. Parameters: alpha = {alpha:.3e}, theta = {theta:.3e}, num_mu = {num_mu:.5e}. Skiping..."
                 print(msg) 
                 yield equation_mu_value, partial_dPsi0
             else:
-                msg = f"RuntimeError occured when alpha = {alpha:.3e}, theta = {theta:.3e}, num_mu = {num_mu:.5e}. No previous results, exiting..."
+                msg = f"RuntimeError occured during equation calculations. Parameters: alpha = {alpha:.3e}, theta = {theta:.3e}, num_mu = {num_mu:.5e}. No previous results, exiting..."
                 raise RuntimeError(msg)
         else:
             dp_int = numerical_problem.num_dp_int_dim(num_mu, theta, alpha, z, dPsi)
@@ -68,7 +68,7 @@ def calculate_equation_mu_zero_singular(numerical_problem: NumericalProblem,
             break
 
     if len(num_mu_zero_singular) != 2:
-        raise RuntimeError(f"Points not found. Exiting,,,")
+        raise RuntimeError(f"Points not found. Parameters: alpha = {alpha:.3e}, theta = {theta:.3e}, num_mu = {num_mu_current:.5e}. Exiting,,,")
     metadata = MetaData(alpha, theta, *num_mu_zero_singular, *partial_dPsi0_zero_singular)
     return metadata    
 
