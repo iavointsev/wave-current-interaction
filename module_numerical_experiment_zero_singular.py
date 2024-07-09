@@ -89,7 +89,7 @@ def getting_statistics(numerical_problem: NumericalProblem,
                     theta_range: Iterable[float] | float,
                     alpha_range: Iterable[float] | float,
                     num_mu_range: Iterable[float],
-                    N_num_mu_points: int = 256,
+                    N_num_mu_points: int,
                     show_progress: bool = False) -> Iterator[MetaData]:
     
     _DELTA = 0.15
