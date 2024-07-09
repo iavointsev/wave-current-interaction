@@ -67,8 +67,11 @@ def calculate_equation_mu_zero_singular(numerical_problem: NumericalProblem,
         if len(num_mu_zero_singular) == 2:
             break
 
-    if len(num_mu_zero_singular) != 2:
-        raise RuntimeError(f"Points not found. Parameters: alpha = {alpha:.3e}, theta = {theta:.3e}, num_mu = {num_mu_current:.5e}. Exiting,,,")
+    if len(num_mu_zero_singular) == 1:
+        print("Warning! Only zero point was found. Assuming num_mu_singular = num_mu_zero.")
+        num_mu_zero_singular.extend(num_mu_zero_singular)
+    elif len(num_mu_zero_singular) != 2:
+        raise RuntimeError(f"No points were found. Parameters: alpha = {alpha:.3e}, theta = {theta:.3e}, num_mu = {num_mu_current:.5e}. Exiting...")
     metadata = MetaData(alpha, theta, *num_mu_zero_singular, *partial_dPsi0_zero_singular)
     return metadata    
 
