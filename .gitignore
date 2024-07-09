@@ -7,3 +7,5 @@ __*
 *.pkl
 *.sbatch
 *_conf.py
+create_config.py
+transfer_configs.sh
