@@ -9,6 +9,7 @@ import importlib
 from pathlib import Path
 
 StrPath = str
+_N_STD = 256
 
 def handle_sigterm(signum, frame) -> None:
     signame = signal.Signals(signum).name
@@ -72,10 +73,14 @@ def initialize_numerical_experiment(cli_args) -> tuple[Iterable | float, Iterabl
     except AttributeError:
         raise AttributeError(f"Configuration file is currupted: no attribute named num_mu_range")
     try:
+        N_num_mu_points = conf.N_num_mu_points
+    except AttributeError:
+        N_num_mu_points = _N_STD
+    try:
         numerical_problem = load_dump(pkl_filename)
     except:
         raise TypeError(f".pkl-file is corrupted")
-    return alpha_range, theta_range, num_mu_range, numerical_problem, show_progress
+    return alpha_range, theta_range, num_mu_range, N_num_mu_points, numerical_problem, show_progress
 
 
 def _save_storage(storage: list[zs.MetaData | newt.MetaData], filename: str) -> None:
@@ -112,9 +117,9 @@ def _create_filename(numerical_parameters: NumericalParameters,
 def perform_zero_singular_experiment(numerical_problem: NumericalProblem,
                                      alpha_range: Iterable| float, 
                                      theta_range: Iterable| float, 
-                                     num_mu_range: Iterable, 
-                                     show_progress: bool,
-                                     N_num_mu_points: int = 256) -> None:
+                                     num_mu_range: Iterable,
+                                     N_num_mu_points: int, 
+                                     show_progress: bool) -> None:
     numerical_parameters = numerical_problem.numerical_parameters
     experiment_name = "zero_singular"
     storage_filename = _create_filename(numerical_parameters, alpha_range, theta_range, experiment_name)
@@ -164,10 +169,10 @@ def main():
     if subcommand == "symbolic":
         create_experiment(h0 = 1e-2, epsilon = 0.05)
     elif subcommand == "zero_singular":
-        alpha_range, theta_range, num_mu_range, numerical_problem, show_progress = initialize_numerical_experiment(cli_args)
-        perform_zero_singular_experiment(numerical_problem, alpha_range, theta_range, num_mu_range, show_progress)
+        alpha_range, theta_range, num_mu_range, N_num_mu_points, numerical_problem, show_progress = initialize_numerical_experiment(cli_args)
+        perform_zero_singular_experiment(numerical_problem, alpha_range, theta_range, num_mu_range, N_num_mu_points, show_progress)
     elif subcommand == "newton":
-        alpha_range, theta_range, num_mu_range, numerical_problem, show_progress = initialize_numerical_experiment(cli_args)
+        alpha_range, theta_range, num_mu_range, _, numerical_problem, show_progress = initialize_numerical_experiment(cli_args)
         num_mu_initial = sum(num_mu_range) / 2
         perform_newton_experiment(numerical_problem, alpha_range, theta_range, num_mu_initial, show_progress)
     else:
