@@ -34,8 +34,8 @@ def _verify_inputs(var: Any) -> Iterable[float]:
 
 
 def calculate_metadata(numerical_problem: NumericalProblem,  
-                        theta: float,
                         alpha: float,
+                        theta: float,
                         num_mu_initial: float,
                         partial_dPsi0_initial: float) -> MetaData:
 
@@ -51,8 +51,8 @@ def calculate_metadata(numerical_problem: NumericalProblem,
     
 
 def getting_statistics(numerical_problem: NumericalProblem,
-                       theta_range: Iterable[float] | float,
                        alpha_range: Iterable[float] | float,
+                       theta_range: Iterable[float] | float,
                        num_mu_initial: float,
                        show_progress: bool = False,
                        concurrent_workers: int = 1) -> Iterator[MetaData]:
