@@ -9,6 +9,7 @@ from typing import NamedTuple, Any
 from collections.abc import Callable, Iterable, Iterator
 from itertools import pairwise, product
 from contextlib import nullcontext
+from multimethod import multimethod
 
 
 class MetaData(NamedTuple):
@@ -23,8 +24,8 @@ class MetaData(NamedTuple):
 
 
 def calculate_equation_mu_partial_dPsi0_values(numerical_problem: NumericalProblem, 
-                                                theta: float, 
                                                 alpha: float, 
+                                                theta: float, 
                                                 num_mu_range: Iterable, 
                                                 partial_dPsi0_initial: float) -> Iterator[float, float]:
     
@@ -50,12 +51,12 @@ def calculate_equation_mu_partial_dPsi0_values(numerical_problem: NumericalProbl
 
 
 def calculate_equation_mu_zero_singular(numerical_problem: NumericalProblem,
-                                        theta: float,
                                         alpha: float,
+                                        theta: float,
                                         num_mu_range: Iterable[float],
                                         partial_dPsi0_initial: float) -> MetaData:
     
-    equation_mu_partial_dPsi0_values = calculate_equation_mu_partial_dPsi0_values(numerical_problem, theta, alpha, num_mu_range, partial_dPsi0_initial)
+    equation_mu_partial_dPsi0_values = calculate_equation_mu_partial_dPsi0_values(numerical_problem, alpha, theta, num_mu_range, partial_dPsi0_initial)
     gen = zip(pairwise(num_mu_range), pairwise(equation_mu_partial_dPsi0_values))
     num_mu_zero_singular = []
     partial_dPsi0_zero_singular = []
@@ -76,34 +77,55 @@ def calculate_equation_mu_zero_singular(numerical_problem: NumericalProblem,
     return metadata    
 
 
-def _verify_inputs(var: Any) -> Iterable[float]:
-    if isinstance(var, Iterable): 
-        if not all(isinstance(theta, float) for theta in var):
+def __verify_inputs(var: Any) -> RealNumpyArray:
+    if not all(isinstance(element, float) for element in var):
             raise TypeError(f"theta_range and alpha_range must be either Iterable[float] or float")
-    else:
-        try:
-            var = [var]
-        except:
-            raise TypeError(f"Could not convert {var.__class__.__name__} into list[float]")
-    return var
+    return np.asarray(var)
 
 
-def getting_statistics(numerical_problem: NumericalProblem,
-                    theta_range: Iterable[float] | float,
-                    alpha_range: Iterable[float] | float,
-                    num_mu_range: Iterable[float],
+def __estimate_interval(metadata_current: MetaData, metadata_previous: MetaData, param: str) -> tuple[float. float]:
+    names = ("num_mu_zero", "num_mu_singular", param)
+    num_mu_zero_current, num_mu_singular_current, param_current = (getattr(metadata_current, name) for name in names)
+    num_mu_zero_previous, num_mu_singular_previous, param_previous = (getattr(metadata_previous, name) for name in names)
+
+    dparam = param_current - param_previous
+    dmu_dalpha_zero = (num_mu_zero_current - num_mu_zero_previous) / dparam
+    dmu_dalpha_singular = (num_mu_singular_current - num_mu_singular_previous) / dparam
+
+    zero_cond = -min(dmu_dalpha_zero, dmu_dalpha_singular)
+    singular_cond = max(dmu_dalpha_zero, dmu_dalpha_singular)
+
+    num_mu_left = 2 * num_mu_zero_current - num_mu_singular_current - np.heaviside(zero_cond, 0.5) * dparam
+    num_mu_right = 2 * num_mu_singular_current - num_mu_zero_current + np.heaviside(singular_cond, 0.5) * dparam
+    return num_mu_left, num_mu_right
+
+
+@multimethod
+def __getting_statistics(numerical_problem: NumericalProblem,
+                    alpha_range: Iterable | float,
+                    theta_range: Iterable | float,
+                    num_mu_range: Iterable,
                     N_num_mu_points: int,
-                    show_progress: bool = False) -> Iterator[MetaData]:
+                    show_progress: bool = False) -> Iterator:
     
-    _DELTA = 0.15
-    
-    theta_range = _verify_inputs(theta_range)
-    alpha_range = _verify_inputs(alpha_range)
+    parameters_passed = locals()
+    info = ' '.join(f"{type(value).__name__}" for _, value in parameters_passed.items())
+    msg = f"Could not find signature for getting_statistics: <{info}> "
+    raise NotImplementedError(msg)
 
-    num_mu_range = np.linspace(num_mu_range[0], num_mu_range[-1], N_num_mu_points)
+@multimethod
+def __getting_statistics(numerical_problem: NumericalProblem,
+                    alpha_range: Iterable,
+                    theta: float,
+                    num_mu_range: Iterable,
+                    N_num_mu_points: int,
+                    show_progress: bool = False) -> Iterator:
+    _DELTA = 0.15
+
+    alpha_range = __verify_inputs(alpha_range)
 
     if show_progress:
-        p_bar_len = len(alpha_range) * len(theta_range)
+        p_bar_len = len(alpha_range)
         p_bar = tqdm(total = p_bar_len)
         logger = tqdm.write
         update = p_bar.update
@@ -112,15 +134,83 @@ def getting_statistics(numerical_problem: NumericalProblem,
         update = lambda *args, **kwargs: ...
         logger = print
 
+    metadata_current = None
+    metadata_previous = None
+
     with p_bar:
         for alpha in alpha_range:
-            partial_dPsi0_initial = numerical_problem.estimate_partial_dPsi0(num_mu_range[0], theta_range[0], alpha)
-            for theta in theta_range:
-                metadata = calculate_equation_mu_zero_singular(numerical_problem, theta, alpha, num_mu_range, partial_dPsi0_initial)
-                num_mu_left, num_mu_right = metadata.num_mu_zero, metadata.num_mu_singular
-                num_mu_range = np.linspace(num_mu_left - _DELTA, num_mu_right + _DELTA, N_num_mu_points)
-                partial_dPsi0_initial = metadata.partial_dPsi0_zero
-                yield metadata
-                _ = update()
-                
+            metadata = calculate_equation_mu_zero_singular(numerical_problem, alpha, theta, num_mu_range, partial_dPsi0_initial)
+            num_mu_left, num_mu_right = metadata.num_mu_zero, metadata.num_mu_singular
 
+            if metadata_current is None:
+                metadata_current = metadata
+            else:
+                metadata_previous = metadata_current
+                metadata_current = metadata
+
+            try:
+                num_mu_left, num_mu_right = __estimate_interval(metadata_current, metadata_previous, "alpha")
+            except AttributeError:
+                num_mu_zero, num_mu_singular = metadata.num_mu_zero, metadata.num_mu_singular
+                num_mu_left, num_mu_right = num_mu_zero - _DELTA, num_mu_singular + _DELTA
+
+            num_mu_range = np.linspace(num_mu_left, num_mu_right, N_num_mu_points)
+            partial_dPsi0_initial = metadata.partial_dPsi0_zero
+            _ = update()
+            yield metadata
+
+@multimethod
+def __getting_statistics(numerical_problem: NumericalProblem,
+                    alpha: float,
+                    theta_range: Iterable,
+                    num_mu_range: Iterable,
+                    N_num_mu_points: int,
+                    show_progress: bool = False) -> Iterator:
+    _DELTA = 0.15
+
+    theta_range = __verify_inputs(theta_range)
+
+    if show_progress:
+        p_bar_len = len(theta_range)
+        p_bar = tqdm(total = p_bar_len)
+        logger = p_bar.write
+        update = p_bar.update
+    else:
+        p_bar = nullcontext()
+        update = lambda *args, **kwargs: ...
+        logger = print
+
+    metadata_current = None
+    metadata_previous = None
+    with p_bar:
+        for theta in theta_range:
+            metadata = calculate_equation_mu_zero_singular(numerical_problem, alpha, theta, num_mu_range, partial_dPsi0_initial)
+            num_mu_left, num_mu_right = metadata.num_mu_zero, metadata.num_mu_singular
+
+            if metadata_current is None:
+                metadata_current = metadata
+            else:
+                metadata_previous = metadata_current
+                metadata_current = metadata
+
+            try:
+                num_mu_left, num_mu_right = __estimate_interval(metadata_current, metadata_previous, "theta")
+            except AttributeError:
+                num_mu_zero, num_mu_singular = metadata.num_mu_zero, metadata.num_mu_singular
+                num_mu_left, num_mu_right = num_mu_zero - _DELTA, num_mu_singular + _DELTA
+
+            num_mu_range = np.linspace(num_mu_left, num_mu_right, N_num_mu_points)
+            partial_dPsi0_initial = metadata.partial_dPsi0_zero
+            _ = update()
+            yield metadata
+
+
+def getting_statistics(numerical_problem: NumericalProblem,
+                    alpha_range: Iterable[float] | float,
+                    theta_range: Iterable[float] | float,
+                    num_mu_range: Iterable[float],
+                    N_num_mu_points: int,
+                    show_progress: bool = False) -> Iterator[MetaData]:
+    gen = __getting_statistics(numerical_problem, alpha_range, theta_range, num_mu_range, N_num_mu_points, show_progress)
+    for metadata in gen:
+        yield metadata
