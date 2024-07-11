@@ -123,6 +123,7 @@ def __getting_statistics(numerical_problem: NumericalProblem,
     _DELTA = 0.15
 
     alpha_range = __verify_inputs(alpha_range)
+    num_mu_range = np.linspace(num_mu_range[0], num_mu_range[-1], N_num_mu_points)
 
     if show_progress:
         p_bar_len = len(alpha_range)
@@ -136,7 +137,7 @@ def __getting_statistics(numerical_problem: NumericalProblem,
 
     metadata_current = None
     metadata_previous = None
-    
+
     partial_dPsi0_initial = numerical_problem.estimate_partial_dPsi0(num_mu_range[0], theta, alpha_range[0])
     with p_bar:
         for alpha in alpha_range:
@@ -170,6 +171,7 @@ def __getting_statistics(numerical_problem: NumericalProblem,
     _DELTA = 0.15
 
     theta_range = __verify_inputs(theta_range)
+    num_mu_range = np.linspace(num_mu_range[0], num_mu_range[-1], N_num_mu_points)
 
     if show_progress:
         p_bar_len = len(theta_range)
