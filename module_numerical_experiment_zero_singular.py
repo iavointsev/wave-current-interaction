@@ -83,7 +83,7 @@ def __verify_inputs(var: Any) -> RealNumpyArray:
     return np.asarray(var)
 
 
-def __estimate_interval(metadata_current: MetaData, metadata_previous: MetaData, param: str) -> tuple[float. float]:
+def __estimate_interval(metadata_current: MetaData, metadata_previous: MetaData, param: str) -> tuple[float, float]:
     names = ("num_mu_zero", "num_mu_singular", param)
     num_mu_zero_current, num_mu_singular_current, param_current = (getattr(metadata_current, name) for name in names)
     num_mu_zero_previous, num_mu_singular_previous, param_previous = (getattr(metadata_previous, name) for name in names)
@@ -136,7 +136,8 @@ def __getting_statistics(numerical_problem: NumericalProblem,
 
     metadata_current = None
     metadata_previous = None
-
+    
+    partial_dPsi0_initial = numerical_problem.estimate_partial_dPsi0(num_mu_range[0], theta, alpha_range[0])
     with p_bar:
         for alpha in alpha_range:
             metadata = calculate_equation_mu_zero_singular(numerical_problem, alpha, theta, num_mu_range, partial_dPsi0_initial)
@@ -182,6 +183,8 @@ def __getting_statistics(numerical_problem: NumericalProblem,
 
     metadata_current = None
     metadata_previous = None
+
+    partial_dPsi0_initial = numerical_problem.estimate_partial_dPsi0(num_mu_range[0], theta_range[0], alpha)
     with p_bar:
         for theta in theta_range:
             metadata = calculate_equation_mu_zero_singular(numerical_problem, alpha, theta, num_mu_range, partial_dPsi0_initial)
