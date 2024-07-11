@@ -106,6 +106,7 @@ def __getting_statistics(numerical_problem: NumericalProblem,
                     theta_range: Iterable | float,
                     num_mu_range: Iterable,
                     N_num_mu_points: int,
+                    verbose: bool = False,
                     show_progress: bool = False) -> Iterator:
     
     parameters_passed = locals()
@@ -119,6 +120,7 @@ def __getting_statistics(numerical_problem: NumericalProblem,
                     theta: float,
                     num_mu_range: Iterable,
                     N_num_mu_points: int,
+                    verbose: bool = False,
                     show_progress: bool = False) -> Iterator:
     _DELTA = 0.15
 
@@ -157,6 +159,9 @@ def __getting_statistics(numerical_problem: NumericalProblem,
                 num_mu_left, num_mu_right = num_mu_zero - _DELTA, num_mu_singular + _DELTA
 
             num_mu_range = np.linspace(num_mu_left, num_mu_right, N_num_mu_points)
+            if verbose:
+                info = f"alpha = {alpha:.5e}, new interval: ({num_mu_left}, {num_mu_right})"
+                logger(info)
             partial_dPsi0_initial = metadata.partial_dPsi0_zero
             _ = update()
             yield metadata
@@ -167,6 +172,7 @@ def __getting_statistics(numerical_problem: NumericalProblem,
                     theta_range: Iterable,
                     num_mu_range: Iterable,
                     N_num_mu_points: int,
+                    verbose: bool = False,
                     show_progress: bool = False) -> Iterator:
     _DELTA = 0.15
 
@@ -205,6 +211,9 @@ def __getting_statistics(numerical_problem: NumericalProblem,
                 num_mu_left, num_mu_right = num_mu_zero - _DELTA, num_mu_singular + _DELTA
 
             num_mu_range = np.linspace(num_mu_left, num_mu_right, N_num_mu_points)
+            if verbose:
+                info = f"alpha = {alpha:.5e}, new interval: ({num_mu_left}, {num_mu_right})"
+                logger(info)
             partial_dPsi0_initial = metadata.partial_dPsi0_zero
             _ = update()
             yield metadata
@@ -215,7 +224,8 @@ def getting_statistics(numerical_problem: NumericalProblem,
                     theta_range: Iterable[float] | float,
                     num_mu_range: Iterable[float],
                     N_num_mu_points: int,
+                    verbose: bool = True,
                     show_progress: bool = False) -> Iterator[MetaData]:
-    gen = __getting_statistics(numerical_problem, alpha_range, theta_range, num_mu_range, N_num_mu_points, show_progress)
+    gen = __getting_statistics(numerical_problem, alpha_range, theta_range, num_mu_range, N_num_mu_points, verbose, show_progress)
     for metadata in gen:
         yield metadata
