@@ -161,7 +161,7 @@ def __getting_statistics(numerical_problem: NumericalProblem,
             num_mu_range = np.linspace(num_mu_left, num_mu_right, N_num_mu_points)
             if verbose:
                 info = f"alpha = {alpha:.5e}, new interval: ({num_mu_left}, {num_mu_right})"
-                logger(info)
+                print(info)
             partial_dPsi0_initial = metadata.partial_dPsi0_zero
             _ = update()
             yield metadata
@@ -213,7 +213,7 @@ def __getting_statistics(numerical_problem: NumericalProblem,
             num_mu_range = np.linspace(num_mu_left, num_mu_right, N_num_mu_points)
             if verbose:
                 info = f"alpha = {alpha:.5e}, new interval: ({num_mu_left}, {num_mu_right})"
-                logger(info)
+                print(info)
             partial_dPsi0_initial = metadata.partial_dPsi0_zero
             _ = update()
             yield metadata
