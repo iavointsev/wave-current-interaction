@@ -41,7 +41,11 @@ def calculate_equation_mu_partial_dPsi0_values(numerical_problem: NumericalProbl
                 print(msg) 
                 yield equation_mu_value, partial_dPsi0
             else:
-                msg = f"RuntimeError occured during equation calculations. Parameters: alpha = {alpha:.3e}, theta = {theta:.3e}, num_mu = {num_mu:.5e}. No previous results, exiting..."
+                msg = f"RuntimeError occured during equation calculations. " \
+                            f"Parameters: alpha = {alpha:.3e}, " \
+                            f"theta = {theta:.3e}, " \
+                            f"num_mu = {num_mu:.5e}. " \
+                            f"No previous results, exiting..."
                 raise RuntimeError(msg)
         else:
             dp_int = numerical_problem.num_dp_int_dim(num_mu, theta, alpha, z, dPsi)
@@ -72,7 +76,12 @@ def calculate_equation_mu_zero_singular(numerical_problem: NumericalProblem,
         print("Warning! Only zero point was found. Assuming num_mu_singular = num_mu_zero.")
         num_mu_zero_singular.extend(num_mu_zero_singular)
     elif len(num_mu_zero_singular) != 2:
-        raise RuntimeError(f"No points were found. Parameters: alpha = {alpha:.3e}, theta = {theta:.3e}, num_mu = {num_mu_current:.5e}. Exiting...")
+        msg = f"No points were found. " \
+                f"Parameters: alpha = {alpha:.3e}, " \
+                f"theta = {theta:.3e}, " \
+                f"num_mu_interval = ({num_mu_range[0]:.5e}, {num_mu_range[1]:.5e}). " \
+                f"Exiting..."
+        raise RuntimeError(msg)
     metadata = MetaData(alpha, theta, *num_mu_zero_singular, *partial_dPsi0_zero_singular)
     return metadata    
 

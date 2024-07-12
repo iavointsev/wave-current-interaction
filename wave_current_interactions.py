@@ -123,7 +123,8 @@ def perform_zero_singular_experiment(numerical_problem: NumericalProblem,
     numerical_parameters = numerical_problem.numerical_parameters
     experiment_name = "zero_singular"
     storage_filename = _create_filename(numerical_parameters, alpha_range, theta_range, experiment_name)
-    gen =  zs.getting_statistics(numerical_problem, alpha_range, theta_range, num_mu_range, N_num_mu_points, show_progress)
+    gen =  zs.getting_statistics(numerical_problem, alpha_range, theta_range, num_mu_range, N_num_mu_points, 
+                                 verbose = True, show_progress = show_progress)
     storage = []
     count = 1
     try:
