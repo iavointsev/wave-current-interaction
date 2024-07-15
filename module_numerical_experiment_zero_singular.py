@@ -37,14 +37,18 @@ def calculate_equation_mu_partial_dPsi0_values(numerical_problem: NumericalProbl
             z, dPsi, partial_dPsi0 = numerical_problem.solve_dPsi_eq(num_mu, theta, alpha, partial_dPsi0_initial)
         except RuntimeError:
             if equation_mu_value is not None:
-                msg = f"RuntimeError occured during equation calculations. Parameters: alpha = {alpha:.3e}, theta = {theta:.3e}, num_mu = {num_mu:.5e}. Skiping..."
+                msg = f"RuntimeError occured during equation calculations." \
+                        f"Parameters: alpha = {alpha:.5e}, " \
+                        f"theta = {theta:.3e}, " \
+                        f"num_mu = {num_mu:.14f}. " \
+                        f"Skiping..."
                 print(msg) 
                 yield equation_mu_value, partial_dPsi0
             else:
                 msg = f"RuntimeError occured during equation calculations. " \
-                            f"Parameters: alpha = {alpha:.3e}, " \
-                            f"theta = {theta:.3e}, " \
-                            f"num_mu = {num_mu:.5e}. " \
+                            f"Parameters: alpha = {alpha:.5e}, " \
+                            f"theta = {theta:.5e}, " \
+                            f"num_mu = {num_mu:.14f}. " \
                             f"No previous results, exiting..."
                 raise RuntimeError(msg)
         else:
@@ -75,11 +79,12 @@ def calculate_equation_mu_zero_singular(numerical_problem: NumericalProblem,
     if len(num_mu_zero_singular) == 1:
         print("Warning! Only zero point was found. Assuming num_mu_singular = num_mu_zero.")
         num_mu_zero_singular.extend(num_mu_zero_singular)
+        partial_dPsi0_zero_singular.extend(partial_dPsi0_zero_singular)
     elif len(num_mu_zero_singular) != 2:
         msg = f"No points were found. " \
-                f"Parameters: alpha = {alpha:.3e}, " \
-                f"theta = {theta:.3e}, " \
-                f"num_mu_interval = ({num_mu_range[0]:.5e}, {num_mu_range[1]:.5e}). " \
+                f"Parameters: alpha = {alpha:.5e}, " \
+                f"theta = {theta:.5e}, " \
+                f"num_mu_interval = ({num_mu_range[0]:.14f}, {num_mu_range[-1]:.14f}). " \
                 f"Exiting..."
         raise RuntimeError(msg)
     metadata = MetaData(alpha, theta, *num_mu_zero_singular, *partial_dPsi0_zero_singular)
@@ -98,11 +103,11 @@ def __estimate_interval(metadata_current: MetaData, metadata_previous: MetaData,
     num_mu_zero_previous, num_mu_singular_previous, param_previous = (getattr(metadata_previous, name) for name in names)
 
     dparam = param_current - param_previous
-    dmu_dalpha_zero = (num_mu_zero_current - num_mu_zero_previous) / dparam
-    dmu_dalpha_singular = (num_mu_singular_current - num_mu_singular_previous) / dparam
+    dmu_dparam_zero = (num_mu_zero_current - num_mu_zero_previous) / dparam
+    dmu_dparam_singular = (num_mu_singular_current - num_mu_singular_previous) / dparam
 
-    zero_cond = -min(dmu_dalpha_zero, dmu_dalpha_singular)
-    singular_cond = max(dmu_dalpha_zero, dmu_dalpha_singular)
+    zero_cond = -min(dmu_dparam_zero, dmu_dparam_singular)
+    singular_cond = max(dmu_dparam_zero, dmu_dparam_singular)
 
     num_mu_left = 2 * num_mu_zero_current - num_mu_singular_current - np.heaviside(zero_cond, 0.5) * dparam
     num_mu_right = 2 * num_mu_singular_current - num_mu_zero_current + np.heaviside(singular_cond, 0.5) * dparam
@@ -164,12 +169,12 @@ def __getting_statistics(numerical_problem: NumericalProblem,
             try:
                 num_mu_left, num_mu_right = __estimate_interval(metadata_current, metadata_previous, "alpha")
             except AttributeError:
-                num_mu_zero, num_mu_singular = metadata.num_mu_zero, metadata.num_mu_singular
+                num_mu_zero, num_mu_singular = metadata_current.num_mu_zero, metadata_current.num_mu_singular
                 num_mu_left, num_mu_right = num_mu_zero - _DELTA, num_mu_singular + _DELTA
 
             num_mu_range = np.linspace(num_mu_left, num_mu_right, N_num_mu_points)
             if verbose:
-                info = f"alpha = {alpha:.5e}, new interval: ({num_mu_left}, {num_mu_right})"
+                info = f"alpha = {alpha:.5e}, new interval: ({num_mu_left:.14f}, {num_mu_right:.14f})"
                 print(info)
             partial_dPsi0_initial = metadata.partial_dPsi0_zero
             _ = update()
@@ -221,7 +226,7 @@ def __getting_statistics(numerical_problem: NumericalProblem,
 
             num_mu_range = np.linspace(num_mu_left, num_mu_right, N_num_mu_points)
             if verbose:
-                info = f"alpha = {alpha:.5e}, new interval: ({num_mu_left}, {num_mu_right})"
+                info = f"theta = {theta:.5e}, new interval: ({num_mu_left:.14f}, {num_mu_right:.14f})"
                 print(info)
             partial_dPsi0_initial = metadata.partial_dPsi0_zero
             _ = update()
