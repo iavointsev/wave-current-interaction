@@ -452,7 +452,7 @@ class NumericalProblem:
         dPsi = solution.y[0]
         return z, dPsi
     
-    def _calculate_partial_dPsi0(self, 
+    def _calculate_partial_dPsi0_newton(self, 
                                  num_mu: float, 
                                  partial_dPsi0_initial: float, 
                                  equation_dPsi_metadata) -> float:
@@ -460,8 +460,25 @@ class NumericalProblem:
         partial_dPsi0_problem = lambda x: self._shooting_method(num_mu, x, equation_dPsi_metadata)[1][-1]
         partial_dPsi0 = newton(func = partial_dPsi0_problem, 
                                 x0 = partial_dPsi0_initial,
-                                tol = 1e-14,
+                                tol = 1e-13,
                                 maxiter = self.__MAXITER)
+        return partial_dPsi0
+    
+    def _calculate_partial_dPsi0(self, 
+                                 num_mu: float, 
+                                 partial_dPsi0_initial: float, 
+                                 equation_dPsi_metadata) -> float:
+        
+        # a = dPsi[z = inf] if partial_dPsi[z = 0] = 0
+        # a + b = dPsi[z = inf] if partial_dPsi[z = 0] = 1 => b = dPsi[z = inf, 1] - dPsi[z = inf, 0]
+        # a + b * partial_dPsi[z = 0] = 0 =>
+        # => partial_dPsi[z = 0] = -a / b = -dPsi[z = inf, 0] / (dPsi[z = inf, 1] - dPsi[z = inf, 0])
+        
+        dPsi_inf_if_partial_dPsi_0 = self._shooting_method(num_mu, 0, equation_dPsi_metadata)[1][-1]
+        dPsi_inf_if_partial_dPsi_1 = self._shooting_method(num_mu, 1, equation_dPsi_metadata)[1][-1]
+
+        partial_dPsi0 = -dPsi_inf_if_partial_dPsi_0 / (dPsi_inf_if_partial_dPsi_1 - dPsi_inf_if_partial_dPsi_0)
+       
         return partial_dPsi0
     
     def _create_equation_dPsi_metadata(self, 
