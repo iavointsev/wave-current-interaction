@@ -113,8 +113,8 @@ def __estimate_interval(metadata_current: MetaData, metadata_previous: MetaData,
     num_mu_right = 2 * num_mu_singular_current - num_mu_zero_current 
 
     num_mu_left, num_mu_right = (num_mu_left, num_mu_right) if num_mu_left < num_mu_right else (num_mu_right, num_mu_left)
-    num_mu_left -=  np.heaviside(left_cond, 0.5) * dparam
-    num_mu_right += np.heaviside(right_cond, 0.5) * dparam
+    num_mu_left -=  abs(np.heaviside(left_cond, 0.5) * dparam)
+    num_mu_right += abs(np.heaviside(right_cond, 0.5) * dparam)
 
     return num_mu_left, num_mu_right
 
